@@ -3,6 +3,7 @@ import Logout from "./Logout.js"
 
 export default class NewBill {
   constructor({ document, onNavigate, store, localStorage }) {
+    NewBill.isPicture = (mimeType) => ['image/jpeg', 'image/jpg', 'image/png', 'image/gif'].includes(mimeType);
     this.document = document
     this.onNavigate = onNavigate
     this.store = store
@@ -18,6 +19,11 @@ export default class NewBill {
   handleChangeFile = e => {
     e.preventDefault()
     const file = this.document.querySelector(`input[data-testid="file"]`).files[0]
+    if(!NewBill.isPicture(file.type)){
+      alert("Only an image file is allowed")
+      this.document.querySelector(`input[data-testid="file"]`).value = null
+      return
+    }
     const filePath = e.target.value.split(/\\/g)
     const fileName = filePath[filePath.length-1]
     const formData = new FormData()

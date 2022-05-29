@@ -3,6 +3,7 @@ import ErrorPage from "./ErrorPage.js"
 import LoadingPage from "./LoadingPage.js"
 
 import Actions from './Actions.js'
+//import { response } from 'express'
 
 const row = (bill) => {
   return (`
@@ -24,7 +25,12 @@ const rows = (data) => {
 }
 
 export default ({ data: bills, loading, error }) => {
-  
+
+  const antiChrono = (a, b) => ((a.date < b.date) ? 1 : -1)
+  if (bills && bills.length){
+      bills.sort(antiChrono)
+  }
+
   const modal = () => (`
     <div class="modal fade" id="modaleFile" tabindex="-1" role="dialog" aria-labelledby="exampleModalCenterTitle" aria-hidden="true">
       <div class="modal-dialog modal-dialog-centered modal-lg" role="document">
@@ -47,7 +53,7 @@ export default ({ data: bills, loading, error }) => {
   } else if (error) {
     return ErrorPage(error)
   }
-  
+
   return (`
     <div class='layout'>
       ${VerticalLayout(120)}
