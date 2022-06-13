@@ -39,7 +39,7 @@ describe("Given I am connected as an employee", () => {
       const html = NewBillUI()
       document.body.innerHTML = html
       const newBill = new NewBill({ document, onNavigate, store:mockedBills, localStorage: window.localStorage })
-      newBill.store = mockedBills      
+      newBill.store = mockedBills     
       const fileInput = document.querySelector(`input[data-testid="file"]`)
       var data = 'Ceci est un fichier texte';
       var file = new File([data], 'primer.txt', {type: 'text/plain'});
@@ -59,10 +59,7 @@ describe("Given I am connected as an employee", () => {
       const root = document.createElement("div")
       root.setAttribute("id", "root")
       document.body.append(root)
-
       router()
-      //document.body.innerHTML = BillsUI({ data: mockedBills })
-
       window.onNavigate(ROUTES_PATH.NewBill)
       const html = NewBillUI()
       document.body.innerHTML = html
@@ -80,89 +77,42 @@ describe("Given I am connected as an employee", () => {
       expect(handleSubmit).toHaveBeenCalled()
     })
   })
-  describe("When an error occurs on API", () => {
-    test("fails with 404 message error on create new bill", done => {
-      jest.spyOn(mockedBills,'bills')
+  describe(" error occurs on API", () => {
+    
+    test("I upload an image file",async () => {
+      jest.spyOn(mockedBills, "bills")
+      console.error = jest.fn((e) => expect(e.message).toBe("Erreur 404"))
       Object.defineProperty(window, 'localStorage', { value: localStorageMock })
       window.localStorage.setItem('user', {
         type: 'Employee',
         email: 'a@a'
       })
-
-      let error = 0
-      mockedBills.bills.mockImplementation(() => {
+      const root = document.createElement("div")
+      root.setAttribute("id", "root")
+      document.body.append(root)
+      router()
+      mockedBills.bills.mockImplementationOnce(() => {
         return {
           create : () =>  {
-            error = 404
-            done();
             return Promise.reject(new Error("Erreur 404"))
           }
-      }})
-      const root = document.createElement("div")
-      root.setAttribute("id", "root")
-      document.body.append(root)
-      router()
+        }})
+  
       window.onNavigate(ROUTES_PATH.NewBill)
       const html = NewBillUI()
       document.body.innerHTML = html
-      const newBill = new NewBill({ document, onNavigate, store:null, localStorage: window.localStorage })
-      newBill.store = mockedBills   
+      try{
+        const newBill = new NewBill({ document, onNavigate, store:mockedBills, localStorage: window.localStorage })
+        newBill.store = mockedBills
+      }
+      catch(e){
+        console.log(e.message)
+      }
       const fileInput = document.querySelector(`input[data-testid="file"]`)
       var data = 'Ceci est un fichier image';
 
       var file = new File([data], 'primer.jpg', {type: 'image/jpeg'});
-      console.error = jest.fn(message => {
-        expect(message.message).toEqual('Erreur 404')
-        })
-      try{
-        userEvent.upload(fileInput,file)
-        done()
-      }
-      catch(e){
-      }
-      expect(error).toBe(404)
+      userEvent.upload(fileInput,file)
     })
-    test("fails with 500 message error on create new bill", done => {
-      jest.spyOn(mockedBills,'bills')
-      Object.defineProperty(window, 'localStorage', { value: localStorageMock })
-      window.localStorage.setItem('user', {
-        type: 'Employee',
-        email: 'a@a'
-      })
-
-      let error = 0
-      mockedBills.bills.mockImplementation(() => {
-        return {
-          create : () =>  {
-            error = 500
-            done();
-            return Promise.reject(new Error("Erreur 500"))
-          }
-      }})
-      const root = document.createElement("div")
-      root.setAttribute("id", "root")
-      document.body.append(root)
-      router()
-      window.onNavigate(ROUTES_PATH.NewBill)
-      const html = NewBillUI()
-      document.body.innerHTML = html
-      const newBill = new NewBill({ document, onNavigate, store:null, localStorage: window.localStorage })
-      newBill.store = mockedBills   
-      const fileInput = document.querySelector(`input[data-testid="file"]`)
-      var data = 'Ceci est un fichier image';
-
-      var file = new File([data], 'primer.jpg', {type: 'image/jpeg'});
-      console.error = jest.fn(message => {
-        expect(message.message).toEqual('Erreur 500')
-        })
-      try{
-        userEvent.upload(fileInput,file)
-        done()
-      }
-      catch(e){
-      }
-      expect(error).toBe(500)
-    })
-
   })
 })

@@ -3,24 +3,16 @@
  */
 
 import {screen, waitFor} from "@testing-library/dom"
-import BillsUI from "../views/BillsUI.js"
-import { bills } from "../fixtures/bills.js"
-import { ROUTES_PATH } from "../constants/routes.js";
-import {localStorageMock} from "../__mocks__/localStorage.js";
-
-import router from "../app/Router.js";
 import userEvent from "@testing-library/user-event";
+import { ROUTES, ROUTES_PATH } from "../constants/routes"
+import { localStorageMock } from "../__mocks__/localStorage.js"
+import mockStore from "../__mocks__/store"
+import { bills } from "../fixtures/bills"
+import router from "../app/Router"
 
+import BillsUI from "../views/BillsUI.js"
 import Bills from "../containers/Bills"
-
-import mockedBills from "../__mocks__/store.js"
-
-import NewBill from '../containers/NewBill';
-import store from "../__mocks__/store.js";
-jest.mock('node-fetch');
-
-import fetch, {Response} from 'node-fetch';
-import VerticalLayout from "../views/VerticalLayout.js";
+jest.mock("../app/Store", () => mockStore)
 
 jest.mock('../containers/NewBill'); // NewBill est maintenant un constructeur simulé
 
@@ -56,7 +48,7 @@ describe("Given I am connected as an employee", () => {
     })
     test("Then click on New Bill : New Bill page", () => {
       document.body.innerHTML = BillsUI({ data: bills })
-      const billsObj = new Bills({ document, onNavigate, mockedBills, localStorage })
+      const billsObj = new Bills({ document, onNavigate, mockStore, localStorage })
       const handleNewBill = jest.fn((e) => billsObj.handleClickNewBill())
       const iconNewBill = screen.getByTestId('btn-new-bill')
       iconNewBill.addEventListener('click',handleNewBill)
@@ -66,7 +58,7 @@ describe("Given I am connected as an employee", () => {
     test("Then bill eye button should exist", () => {
       const iconsEye = screen.getAllByTestId('icon-eye')
       expect(iconsEye.length).toEqual(4)
-      const billsObj = new Bills({ document, onNavigate, mockedBills, localStorage })
+      const billsObj = new Bills({ document, onNavigate, mockStore, localStorage })
       const handleShowTicket1 = jest.fn((e) => billsObj.handleClickIconEye(iconsEye[0]))
       iconsEye[0].addEventListener('click', handleShowTicket1)
       userEvent.click(iconsEye[0])
@@ -74,57 +66,56 @@ describe("Given I am connected as an employee", () => {
     })
     test("Then click on New Bill : New Bill page", () => {
       document.body.innerHTML = BillsUI({ data: bills })
-      const billsObj = new Bills({ document, onNavigate, mockedBills, localStorage })
+      const billsObj = new Bills({ document, onNavigate, mockStore, localStorage })
       billsObj.store = ""
       expect(billsObj.getBills()).toBeUndefined()
-      billsObj.store = mockedBills
+      billsObj.store = mockStore
       expect(billsObj.getBills()).toBeDefined()
     })
   })
   describe("When an error occurs on API", () => {
-    test("fails with 500 message error on create new bill", async () => {
-      Object.defineProperty(window, 'localStorage', { value: localStorageMock })
+    beforeEach(() => {
+      jest.spyOn(mockStore, "bills")
+      Object.defineProperty(
+          window,
+          'localStorage',
+          { value: localStorageMock }
+      )
       window.localStorage.setItem('user', JSON.stringify({
-        type: 'Employee'
+        type: 'Employee',
+        email: "a@a"
       }))
-      fetch.mockImplementation(() => {
-        return Promise.reject(new Error("Erreur 500"))
-      })
-      document.body.innerHTML = "" //`<div>${VerticalLayout(120)}`
       const root = document.createElement("div")
       root.setAttribute("id", "root")
-      document.body.append(root)
+      document.body.appendChild(root)
       router()
-
-      // document.body.innerHTML = `<div>${VerticalLayout(120)}`
-      window.onNavigate(ROUTES_PATH['Bills'])
-      
-      await new Promise(process.nextTick);
-      //console.log("ERREUR:"+document.getElementById('root').innerHTML)
-      const message = await screen.getByText(/Erreur 500/)
-      expect(message).toBeTruthy()
     })
-    test("fails with 404 message error on create new bill", async () => {
-      Object.defineProperty(window, 'localStorage', { value: localStorageMock })
-      window.localStorage.setItem('user', JSON.stringify({
-        type: 'Employee'
-      }))
-      fetch.mockImplementation(() => {
-        return Promise.reject(new Error("Erreur 404"))
-      })
-      document.body.innerHTML = "" //`<div>${VerticalLayout(120)}`
-      const root = document.createElement("div")
-      root.setAttribute("id", "root")
-      document.body.append(root)
-      router()
 
-      // document.body.innerHTML = `<div>${VerticalLayout(120)}`
-      window.onNavigate(ROUTES_PATH['Bills'])
-      
+    test("fails with 404 message error on create new bill", async () => {
+      mockStore.bills.mockImplementationOnce(() => {
+        return {
+          list : () =>  {
+            return Promise.reject(new Error("Erreur 404"))
+          }
+        }})
+      window.onNavigate(ROUTES_PATH.Bills)
       await new Promise(process.nextTick);
-      //console.log("ERREUR:"+document.getElementById('root').innerHTML)
       const message = await screen.getByText(/Erreur 404/)
+      expect(message).toBeTruthy()
+
+    })
+    test("fails with 500 message error on create new bill", async () => {
+      mockStore.bills.mockImplementationOnce(() => {
+        return {
+          list : () =>  {
+            return Promise.reject(new Error("Erreur 500"))
+          }
+        }})
+      window.onNavigate(ROUTES_PATH.Bills)
+      await new Promise(process.nextTick);
+      const message = await screen.getByText(/Erreur 500/)
       expect(message).toBeTruthy()
     })
   })
 })
+
