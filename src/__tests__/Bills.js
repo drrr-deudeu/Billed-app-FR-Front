@@ -16,6 +16,11 @@ import Bills from "../containers/Bills"
 import mockedBills from "../__mocks__/store.js"
 
 import NewBill from '../containers/NewBill';
+import store from "../__mocks__/store.js";
+jest.mock('node-fetch');
+
+import fetch, {Response} from 'node-fetch';
+import VerticalLayout from "../views/VerticalLayout.js";
 
 jest.mock('../containers/NewBill'); // NewBill est maintenant un constructeur simulé
 
@@ -74,6 +79,52 @@ describe("Given I am connected as an employee", () => {
       expect(billsObj.getBills()).toBeUndefined()
       billsObj.store = mockedBills
       expect(billsObj.getBills()).toBeDefined()
+    })
+  })
+  describe("When an error occurs on API", () => {
+    test("fails with 500 message error on create new bill", async () => {
+      Object.defineProperty(window, 'localStorage', { value: localStorageMock })
+      window.localStorage.setItem('user', JSON.stringify({
+        type: 'Employee'
+      }))
+      fetch.mockImplementation(() => {
+        return Promise.reject(new Error("Erreur 500"))
+      })
+      document.body.innerHTML = "" //`<div>${VerticalLayout(120)}`
+      const root = document.createElement("div")
+      root.setAttribute("id", "root")
+      document.body.append(root)
+      router()
+
+      // document.body.innerHTML = `<div>${VerticalLayout(120)}`
+      window.onNavigate(ROUTES_PATH['Bills'])
+      
+      await new Promise(process.nextTick);
+      //console.log("ERREUR:"+document.getElementById('root').innerHTML)
+      const message = await screen.getByText(/Erreur 500/)
+      expect(message).toBeTruthy()
+    })
+    test("fails with 404 message error on create new bill", async () => {
+      Object.defineProperty(window, 'localStorage', { value: localStorageMock })
+      window.localStorage.setItem('user', JSON.stringify({
+        type: 'Employee'
+      }))
+      fetch.mockImplementation(() => {
+        return Promise.reject(new Error("Erreur 404"))
+      })
+      document.body.innerHTML = "" //`<div>${VerticalLayout(120)}`
+      const root = document.createElement("div")
+      root.setAttribute("id", "root")
+      document.body.append(root)
+      router()
+
+      // document.body.innerHTML = `<div>${VerticalLayout(120)}`
+      window.onNavigate(ROUTES_PATH['Bills'])
+      
+      await new Promise(process.nextTick);
+      //console.log("ERREUR:"+document.getElementById('root').innerHTML)
+      const message = await screen.getByText(/Erreur 404/)
+      expect(message).toBeTruthy()
     })
   })
 })

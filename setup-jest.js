@@ -5,3 +5,4 @@ global.$ = global.jQuery = $;
 global.$.fn.modal = jest.fn(() => $());
 
 //import { shallow, mount } from 'enzyme';
+require('jest-fetch-mock').enableMocks()
